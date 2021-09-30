@@ -1,6 +1,9 @@
 from typing import Dict, Iterator, List, Optional, Tuple, TypeVar, Protocol
 import collections
 import heapq
+from matplotlib import image, pyplot
+from numpy import asarray, array, uint8, append
+from PIL import Image
 
 Location = TypeVar('Location')
 GridLocation = Tuple[int, int]
@@ -67,6 +70,32 @@ class GridWithWeights(SquareGrid):
   def cost(self, from_node: GridLocation, to_node: GridLocation) -> float:
     return self.weights.get(to_node, 1)
 
+class ImgGridWithWeights(GridWithWeights):
+  def __init__(self):
+    self.width = None
+    self.height = None
+    self.walls: List[GridLocation] = []
+    self.weights: Dict[GridLocation, float] = {}
+    self.segmented_img_array: List[List[List[int, int, int]]] = []
+    self.colorful_img_array: List[List[List[int, int, int]]] = []
+  def loadImg(self, segmented_img: str, colorful_img: str):
+    img = image.imread(segmented_img)
+    self.segmented_img_array = asarray(img)
+    img = image.imread(colorful_img)
+    self.colorful_img_array = asarray(img)
+    print(img.dtype)
+    print(img.shape)
+    # pyplot.imshow(img)
+    # pyplot.show()
+
+    self.width = img.shape[1]
+    self.height = img.shape[0]
+    for y in range(img.shape[0]):
+      for x in range(img.shape[1]):
+        pixel = self.segmented_img_array[y][x]
+        if ((int(pixel[0]) + int(pixel[1]) + int(pixel[2])) / 3 <= 200):
+          self.walls.append((x, y))
+
 def draw_grid(g: SquareGrid, point_to: Dict[Location, Optional[Location]], start: Optional[Location], goal: Optional[Location], path: Optional[List[Location]]=[], cost: Optional[Dict[Location, float]]={}):
   print("drawing %d x %d grid" % (g.width, g.height))
   for y in range(g.height):
@@ -100,3 +129,37 @@ def draw_grid(g: SquareGrid, point_to: Dict[Location, Optional[Location]], start
       print(" . ", end="")
     print("")
   print("==================\n")
+
+def draw_img(g: SquareGrid, start: Optional[Location], goal: Optional[Location], path: Optional[List[Location]]=[], cost: Optional[Dict[Location, float]]={}, point_to: Dict[Location, Optional[Location]]={}):
+  # check type
+  # print("segmented_img_array: %s" % type(g.segmented_img_array))
+  # print("segmented_img_array[0]: %s" % type(g.segmented_img_array[0]))
+  # print("segmented_img_array[0][0]: %s" % type(g.segmented_img_array[0][0]))
+  # print("segmented_img_array[0][0][0]: %s" % type(g.segmented_img_array[0][0][0]))
+
+  # clone segmented_img_array from SquareGrid
+  colorful_img_array = []
+  for y in range(len(g.colorful_img_array)):
+    colorful_img_array.append([])
+    for x in range(len(g.colorful_img_array[0])):
+      colorful_img_array[y].append(array([ g.colorful_img_array[y][x][0], g.colorful_img_array[y][x][1], g.colorful_img_array[y][x][2] ]))
+    colorful_img_array[y] = array(colorful_img_array[y])
+  colorful_img_array = array(colorful_img_array)
+  for point in path:
+    (x, y) = point
+    colorful_img_array[y][x] = array([uint8(0), uint8(255), uint8(0)])
+  # highlight start/goal
+  colorful_img_array[start[1]][start[0]] = array([255, 0, 0])
+  colorful_img_array[start[1]+1][start[0]] = array([255, 0, 0])
+  colorful_img_array[start[1]-1][start[0]] = array([255, 0, 0])
+  colorful_img_array[start[1]][start[0]+1] = array([255, 0, 0])
+  colorful_img_array[start[1]][start[0]-1] = array([255, 0, 0])
+  colorful_img_array[goal[1]][goal[0]] = array([0, 0, 255])
+  colorful_img_array[goal[1]+1][goal[0]] = array([0, 0, 255])
+  colorful_img_array[goal[1]-1][goal[0]] = array([0, 0, 255])
+  colorful_img_array[goal[1]][goal[0]+1] = array([0, 0, 255])
+  colorful_img_array[goal[1]][goal[0]-1] = array([0, 0, 255])
+  img = Image.fromarray(colorful_img_array)
+  pyplot.imshow(img)
+  pyplot.show()
+

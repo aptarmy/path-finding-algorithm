@@ -72,10 +72,10 @@ def reconstruct_path(came_from: Dict[Location, Location], start: Location, goal:
   path.reverse() # optional
   return path
 
-g = GridWithWeights(30, 15)
-g.walls = DIAGRAM1_WALLS
-start = (24, 0)
-goal = (0, 0)
+# g = GridWithWeights(30, 15)
+# g.walls = DIAGRAM1_WALLS
+# start = (24, 0)
+# goal = (0, 9)
 
 
 # (came_from) = best_first_search(g, start, goal)
@@ -86,7 +86,16 @@ goal = (0, 0)
 # path = reconstruct_path(came_from, start, goal)
 # draw_grid(g, point_to=came_from, start=start, path=path, goal=goal)
 
+# (came_from, cost_so_far) = a_star_search(g, start, goal)
+# path = reconstruct_path(came_from, start, goal)
+# draw_grid(g, point_to=came_from, start=start, goal=goal)
+# draw_grid(g, point_to=came_from, start=start, path=path, goal=goal)
+
+# from segmented image
+g = ImgGridWithWeights()
+g.loadImg(segmented_img="boat-route-finding-segmented-map-resized.jpg", colorful_img="boat-route-finding-map-resized.jpg")
+start = (50, 50)
+goal = (94, 7)
 (came_from, cost_so_far) = a_star_search(g, start, goal)
 path = reconstruct_path(came_from, start, goal)
-draw_grid(g, point_to=came_from, start=start, goal=goal)
-draw_grid(g, point_to=came_from, start=start, path=path, goal=goal)
+draw_img(g, path=path, start=start, goal=goal)
